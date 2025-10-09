@@ -1,0 +1,37 @@
+diff --git a/experiments/compression/corpus.py b/experiments/compression/corpus.py
+index 56e2621..c8bd343 100644
+--- a/experiments/compression/corpus.py
++++ b/experiments/compression/corpus.py
+@@ -10,16 +10,17 @@ import time
+ 
+ def github_commits():
+     OAUTH_TOKEN = getpass.getpass("OAuth Token? ")
+-    COMMIT_API = (
+-        f'curl -H "Authorization: token {OAUTH_TOKEN}" '
+-        f"https://api.github.com/repos/python-websockets/websockets/git/commits/:sha"
+-    )
++
++    def fetch_commit(sha):
++        url = f"https://api.github.com/repos/python-websockets/websockets/git/commits/{sha}"
++        headers = ["-H", f"Authorization: token {OAUTH_TOKEN}"]
++        cmd = ["curl"] + headers + [url]
++        return subprocess.check_output(cmd)
+ 
+     commits = []
+ 
+     head = subprocess.check_output(
+-        "git rev-parse origin/main",
+-        shell=True,
++        ["git", "rev-parse", "origin/main"],
+         text=True,
+     ).strip()
+     todo = [head]
+@@ -27,7 +28,7 @@ def github_commits():
+ 
+     while todo:
+         sha = todo.pop(0)
+-        commit = subprocess.check_output(COMMIT_API.replace(":sha", sha), shell=True)
++        commit = fetch_commit(sha)
+         commits.append(commit)
+         seen.add(sha)
+         for parent in json.loads(commit)["parents"]:
