@@ -1,23 +1,19 @@
 %global pypi_name websockets
 
-%ifarch x86_64
-%bcond_without tests
-%endif
-
 Name:           python-%{pypi_name}
-Version:        11.0.3
-Release:        6%{?dist}
+Version:        14.2
+Release:        1%{?dist}
 Summary:        Implementation of the WebSocket Protocol for Python
 
-License:        BSD
+License:        BSD-3-Clause
 URL:            https://github.com/aaugustin/websockets
 Source0:        %{url}/archive/%{version}/%{pypi_name}-%{version}.tar.gz
 
+# remove shell=True from experiments/compression/corpus.py
+Patch0:         remove-shell-true.patch
+
 BuildRequires:  gcc
 
-%if %{with tests}
-BuildRequires:  python3dist(pytest)
-%endif
 
 %global _description %{expand:
 websockets is a library for developing WebSocket servers and clients in
@@ -39,26 +35,6 @@ BuildRequires:  python3-devel
 %prep
 %autosetup -n %{pypi_name}-%{version} -p1
 
-# Upstream uses a src package but does not specify this explicitly in the
-# pyproject.toml. This causes the build to fail on CentOS Stream 9 and RHEL 9.
-# Workaround this problem by adding a very small setup.cfg file that specifies where
-# the source code lives inside `src`.
-%if %{defined el9}
-cat << EOF > setup.cfg
-[metadata]
-name = websockets
-
-[options]
-package_dir=
-    =src
-packages=find:
-
-[options.packages.find]
-where=src
-EOF
-%endif
-
-
 %generate_buildrequires
 %pyproject_buildrequires
 
@@ -72,17 +48,15 @@ EOF
 %check
 %pyproject_check_import
 
-%if %{with tests}
-# Skip some tests that require network connectivity and/or a running daemon.
-# Investigate: test_server_shuts_down_* tests hang or fail on Python 3.12
-%pytest -v --ignore compliance --ignore tests/sync -k "not test_explicit_host_port and not test_server_shuts_down"
-%endif
-
 
 %files -n python3-%{pypi_name} -f %{pyproject_files}
 %doc README.rst
 
 %changelog
+* Tue Sep 09 2025 Kseniia Nivnia <knivnia@redhat.com> - 14.2-1
+- Update to 14.2 and add patch to remove shell=True
+  Resolves: RHEL-113034
+
 * Tue Jan 30 2024 Major Hayden <mhayden@redhat.com> - 11.0.3-6
 - Bump revision to add gating.yaml
 
