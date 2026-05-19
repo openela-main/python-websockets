@@ -2,12 +2,12 @@
 
 Name:           python-%{pypi_name}
 Version:        14.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Implementation of the WebSocket Protocol for Python
 
 License:        BSD-3-Clause
 URL:            https://github.com/aaugustin/websockets
-Source0:        %{url}/archive/%{version}/%{pypi_name}-%{version}.tar.gz
+Source0:        %{pypi_source %{pypi_name}}
 
 # remove shell=True from experiments/compression/corpus.py
 Patch0:         remove-shell-true.patch
@@ -20,7 +20,7 @@ websockets is a library for developing WebSocket servers and clients in
 Python. It implements RFC 6455 with a focus on correctness and simplicity. It
 passes the Autobahn Testsuite.
 
-Built on top of Python’s asynchronous I/O support introduced in PEP 3156, it
+Built on top of Python's asynchronous I/O support introduced in PEP 3156, it
 provides an API based on coroutines, making it easy to write highly concurrent
 applications.}
 
@@ -34,6 +34,20 @@ BuildRequires:  python3-devel
 
 %prep
 %autosetup -n %{pypi_name}-%{version} -p1
+
+# Create setup.cfg to fix package name metadata
+cat > setup.cfg <<EOF
+[metadata]
+name = websockets
+
+[options]
+packages = find:
+package_dir =
+    = src
+
+[options.packages.find]
+where = src
+EOF
 
 %generate_buildrequires
 %pyproject_buildrequires
@@ -53,6 +67,10 @@ BuildRequires:  python3-devel
 %doc README.rst
 
 %changelog
+* Thu Apr 09 2026 Kseniia Nivnia <knivnia@redhat.com> - 14.2-2
+- Bump revision to address packaging issues
+  Resolves: RHEL-157865
+
 * Tue Sep 09 2025 Kseniia Nivnia <knivnia@redhat.com> - 14.2-1
 - Update to 14.2 and add patch to remove shell=True
   Resolves: RHEL-113034
